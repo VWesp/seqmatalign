@@ -66,7 +66,7 @@ try:
     backtrace_matrix = [["" for i in range(len(seq2))] for i in range(len(seq1))]
     arrow_matrix = [[{} for i in range(len(seq2))] for i in range(len(seq1))]
     maximum_value = -(sys.maxsize - 1)
-    maximum_indices = list()
+    maximum_indices = []
     figsize = max(len(seq1), len(seq2))/2
     fig, ax = plt.subplots(figsize=(figsize, figsize))
     ax.text(0, 0, str(matrix[0][0]), va='center', ha='center')
@@ -133,7 +133,7 @@ try:
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
     ax.set_xticklabels([""]+list(seq2))
     ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
-    alignments = list()
+    alignments = []
 
 
     def backtrace(i, j, aligned_seq1, aligned_seq2):
@@ -171,11 +171,11 @@ try:
 
     if(args.algorithm == "nw"):
         highlight_cell(len(seq2)-1, len(seq1)-1, color="green", linewidth=2)
-        backtrace(len(seq1)-1, len(seq2)-1, list(), list())
+        backtrace(len(seq1)-1, len(seq2)-1, [], [])
     elif(args.algorithm == "sw" and maximum_value != 0):
         for indices in maximum_indices:
             highlight_cell(indices[1], indices[0], color="green", linewidth=2)
-            backtrace(indices[0], indices[1], list(), list())
+            backtrace(indices[0], indices[1], [], [])
 
 
     aligments_str = ""
