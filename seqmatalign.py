@@ -118,7 +118,7 @@ try:
                     arrow = plt.annotate(text="", xy=(j, i-0.15), xytext=(j, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
                     arrow_matrix[i][j]["U"] = arrow
 
-                if(matrix[i][j] >= maximum_value):#
+                if(matrix[i][j] >= maximum_value):
                     if(matrix[i][j] > maximum_value):
                         del maximum_indices[:]
 
