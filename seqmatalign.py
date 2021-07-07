@@ -57,9 +57,7 @@ try:
 
     seq1 = "-" + seq1
     seq2 = "-" + seq2
-    matrix = [[0 for i in range(len(seq2))] for i in range(len(seq1))]
-    matrix_left = [[0 for i in range(len(seq2))] for i in range(len(seq1))]
-    matrix_up = [[0 for i in range(len(seq2))] for i in range(len(seq1))]
+    matrix = [[0.0 for i in range(len(seq2))] for i in range(len(seq1))]
     backtrace_matrix = [["" for i in range(len(seq2))] for i in range(len(seq1))]
     arrow_matrix = [[{} for i in range(len(seq2))] for i in range(len(seq1))]
     maximum_value = -(sys.maxsize - 1)
@@ -69,7 +67,7 @@ try:
     ax.text(0, 0, str(matrix[0][0]), va='center', ha='center')
     for j in range(1, len(seq2)):
         if(args.algorithm == "nw"):
-            matrix[0][j] = args.gap * j
+            matrix[0][j] = float(args.gap) * j
             backtrace_matrix[0][j] = "L"
             arrow = plt.annotate(text="", xy=(j-0.2, 0), xytext=(j-0.8, 0), arrowprops=dict(arrowstyle="<-", color="r"))
             arrow_matrix[0][j]["L"] = arrow
@@ -79,7 +77,7 @@ try:
 
     for i in range(1, len(seq1)):
         if(args.algorithm == "nw"):
-            matrix[i][0] = args.gap * i
+            matrix[i][0] = float(args.gap) * i
             backtrace_matrix[i][0] = "U"
             arrow = plt.annotate(text="", xy=(0, i-0.15), xytext=(0, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
             arrow_matrix[i][0]["U"] = arrow
@@ -95,7 +93,7 @@ try:
             if(args.function == "sim"):
                 matrix[i][j] = max(diagonal_value, max(left_value, up_value))
                 if(args.algorithm == "sw"):
-                    matrix[i][j] = max(0, matrix[i][j])
+                    matrix[i][j] = max(0.0, matrix[i][j])
             elif(args.function == "dis"):
                 matrix[i][j] = min(diagonal_value, min(left_value, up_value))
 
@@ -135,9 +133,7 @@ try:
 
     def backtrace(i, j, aligned_seq1, aligned_seq2):
         if((i == 0 and j == 0) or (args.algorithm == "sw" and matrix[i][j] == 0)):
-            if(not [aligned_seq1, aligned_seq2] in alignments):
-                alignments.append([aligned_seq1, aligned_seq2])
-
+            alignments.append([aligned_seq1, aligned_seq2])
             return
 
         if("D" in backtrace_matrix[i][j]):
