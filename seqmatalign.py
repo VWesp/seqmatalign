@@ -7,8 +7,8 @@ import traceback
 
 try:
     parser = argparse.ArgumentParser(description="Align two sequences with Needleman-Wunsch or Smith-Waterman and build the backtrace matrix")
-    parser.add_argument("-s1", "--sequence1", help="Set the path to first sequence file (with or without header)", required=True)
-    parser.add_argument("-s2", "--sequence2", help="Set the path to second sequence file (with or without header)", required=True)
+    parser.add_argument("-s1", "--sequence1", help="Set the path to first sequence file (with or without header)", default="seq1.fasta")
+    parser.add_argument("-s2", "--sequence2", help="Set the path to second sequence file (with or without header)", default="seq2.fasta")
     parser.add_argument("-alg", "--algorithm", help="Specify whether the Needleman-Wunsch (nw) or the Smith-Waterman (sw) algorithm should be used", choices=["nw", "sw"], default="nw")
     parser.add_argument("-f", "--function", help="Specify whether the score function should be minimized (distance, dis) or maximized (similarity, sim). If the Smith-Waterman algorithm is chosen, the function is always maximized", choices=["dis", "sim"], default="sim")
     parser.add_argument("-s", "--scores", help="Set the path to the score file", default="scores.txt")
@@ -48,10 +48,7 @@ try:
             score = line.strip().split(" ")
             scores[letters[first_index]] = {}
             for second_index in range(len(score)):
-                if((float(score[second_index])).is_integer):
-                    scores[letters[first_index]][letters[second_index]] = int(score[second_index])
-                else:
-                    scores[letters[first_index]][letters[second_index]] = float(score[second_index])
+                scores[letters[first_index]][letters[second_index]] = float(score[second_index])
 
             first_index += 1
 
