@@ -124,10 +124,12 @@ try:
             highlight_cell(j, i, color="black", linewidth=1)
 
     ax.matshow(matrix, aspect='auto', cmap=ListedColormap(["w"]))
+    ticks_loc = list(ax.get_yticks())[:-1]
+    ax.yaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
     ax.set_yticklabels([""]+list(seq1))
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    ticks_loc = list(ax.get_xticks())[:-1]
+    ax.xaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
     ax.set_xticklabels([""]+list(seq2))
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
     alignments = []
 
 
@@ -144,6 +146,7 @@ try:
 
             plt.annotate(text="", xy=(j-0.2, i-0.15), xytext=(j-0.8, i-0.85), arrowprops=dict(arrowstyle="<-", color="b"))
             backtrace(i-1, j-1, [seq1[i]]+aligned_seq1, [seq2[j]]+aligned_seq2)
+
         if("L" in backtrace_matrix[i][j]):
             try:
                 arrow_matrix[i][j]["L"].remove()
@@ -152,6 +155,7 @@ try:
 
             plt.annotate(text="", xy=(j-0.2, i), xytext=(j-0.8, i), arrowprops=dict(arrowstyle="<-", color="b"))
             backtrace(i, j-1, ["-"]+aligned_seq1, [seq2[j]]+aligned_seq2)
+
         if("U" in backtrace_matrix[i][j]):
             try:
                 arrow_matrix[i][j]["U"].remove()
