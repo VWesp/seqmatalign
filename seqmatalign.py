@@ -52,8 +52,10 @@ try:
 
             first_index += 1
 
+    alg_type = "global"
     if(args.algorithm == "sw"):
         args.function = "sim"
+        alg_type = "local"
 
     seq1 = "-" + seq1
     seq2 = "-" + seq2
@@ -124,12 +126,10 @@ try:
             highlight_cell(j, i, color="black", linewidth=1)
 
     ax.matshow(matrix, aspect='auto', cmap=ListedColormap(["w"]))
-    ticks_loc = list(ax.get_yticks())[:-1]
-    ax.yaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
     ax.set_yticklabels([""]+list(seq1))
-    ticks_loc = list(ax.get_xticks())[:-1]
-    ax.xaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
     ax.set_xticklabels([""]+list(seq2))
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
     alignments = []
 
 
@@ -183,6 +183,6 @@ try:
             aligments_str += "\n\n" + str(alignment[0]) + "\n" + str(alignment[1])
 
     plt.gcf().text(0.93, 0.5, aligments_str, verticalalignment="center", bbox=dict(boxstyle='round', facecolor='white', alpha=0.15))
-    plt.savefig("backtrace.pdf", bbox_inches="tight")
+    plt.savefig(alg_type+"_alignments.pdf", bbox_inches="tight")
 except Exception as ex:
     print(traceback.print_exc())
