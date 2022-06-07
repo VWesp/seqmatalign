@@ -2,6 +2,7 @@ import argparse
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import matplotlib.ticker as ticker
+import matplotlib.backends.backend_pdf
 import sys
 import traceback
 
@@ -13,8 +14,9 @@ try:
     parser.add_argument("-f", "--function", help="Specify whether the score function should be minimized (distance, dis) or maximized (similarity, sim). If the Smith-Waterman algorithm is chosen, the function is always maximized", choices=["dis", "sim"], default="sim")
     parser.add_argument("-s", "--scores", help="Set the path to the score file", default="scores.txt")
     parser.add_argument("-g", "--gap", help="Specify the gap costs", default=-1, type=float)
+    parser.add_argument("-oe", "--overhanging-ends", help="Ignore overhanging ends in the alignment", action="store_true")
+    parser.add_argument("-si", "--set-int", help="Convert all scores in the matrix to int cutting off decimals", action="store_true")
     args = parser.parse_args()
-
 
     def highlight_cell(x,y, ax=None, **kwargs):
         rect = plt.Rectangle((x-.5, y-.5), 1,1, fill=False, **kwargs)
@@ -66,32 +68,59 @@ try:
     maximum_indices = []
     figsize = max(len(seq1), len(seq2))/2
     fig, ax = plt.subplots(figsize=(figsize, figsize))
-    ax.text(0, 0, str(matrix[0][0]), va='center', ha='center')
+    if(args.set_int):
+        ax.text(0, 0, str(int(matrix[0][0])), va='center', ha='center')
+    else:
+        ax.text(0, 0, str(matrix[0][0]), va='center', ha='center')
+
     for j in range(1, len(seq2)):
         if(args.algorithm == "nw"):
-            matrix[0][j] = float(args.gap) * j
+            if(args.overhanging_ends):
+                matrix[0][j] = 0.0
+            else:
+                matrix[0][j] = float(args.gap) * j
+
             backtrace_matrix[0][j] = "L"
             arrow = plt.annotate(text="", xy=(j-0.2, 0), xytext=(j-0.8, 0), arrowprops=dict(arrowstyle="<-", color="r"))
             arrow_matrix[0][j]["L"] = arrow
 
-        ax.text(j, 0, str(matrix[0][j]), va='center', ha='center')
+        if(args.set_int):
+            ax.text(j, 0, str(int(matrix[0][j])), va='center', ha='center')
+        else:
+            ax.text(j, 0, str(matrix[0][j]), va='center', ha='center')
+
         highlight_cell(j, 0, color="black", linewidth=1)
 
     for i in range(1, len(seq1)):
         if(args.algorithm == "nw"):
-            matrix[i][0] = float(args.gap) * i
+            if(args.overhanging_ends):
+                matrix[i][0] = 0.0
+            else:
+                matrix[i][0] = float(args.gap) * i
+
             backtrace_matrix[i][0] = "U"
             arrow = plt.annotate(text="", xy=(0, i-0.15), xytext=(0, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
             arrow_matrix[i][0]["U"] = arrow
 
-        ax.text(0, i, str(matrix[i][0]), va='center', ha='center')
+        if(args.set_int):
+            ax.text(0, i, str(int(matrix[i][0])), va='center', ha='center')
+        else:
+            ax.text(0, i, str(matrix[i][0]), va='center', ha='center')
+
         highlight_cell(0, i, color="black", linewidth=1)
 
     for i in range(1, len(seq1)):
         for j in range(1, len(seq2)):
+
             diagonal_value = matrix[i-1][j-1] + scores[seq1[i]][seq2[j]]
             left_value = matrix[i][j-1] + args.gap
+            if(args.overhanging_ends and i==len(seq1)-1):
+                left_value = matrix[i][j-1]
+
             up_value = matrix[i-1][j] + args.gap
+            if(args.overhanging_ends and j==len(seq2)-1):
+                up_value = matrix[i-1][j]
+
             if(args.function == "sim"):
                 matrix[i][j] = max(diagonal_value, max(left_value, up_value))
                 if(args.algorithm == "sw"):
@@ -122,7 +151,11 @@ try:
                     maximum_value = matrix[i][j]
                     maximum_indices.append([i, j])
 
-            ax.text(j, i, str(matrix[i][j]), va='center', ha='center')
+            if(args.set_int):
+                ax.text(j, i, str(int(matrix[i][j])), va='center', ha='center')
+            else:
+                ax.text(j, i, str(matrix[i][j]), va='center', ha='center')
+
             highlight_cell(j, i, color="black", linewidth=1)
 
     ax.matshow(matrix, aspect='auto', cmap=ListedColormap(["w"]))
@@ -169,7 +202,7 @@ try:
     if(args.algorithm == "nw"):
         highlight_cell(len(seq2)-1, len(seq1)-1, color="green", linewidth=2)
         backtrace(len(seq1)-1, len(seq2)-1, [], [])
-    elif(args.algorithm == "sw" and maximum_value != 0):
+    elif((args.algorithm == "sw" and maximum_value != 0)):
         for indices in maximum_indices:
             highlight_cell(indices[1], indices[0], color="green", linewidth=2)
             backtrace(indices[0], indices[1], [], [])
