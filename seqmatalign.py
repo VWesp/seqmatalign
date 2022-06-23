@@ -9,7 +9,6 @@ import traceback
 
 if __name__ == "__main__":
     try:
-        os.chdir("../..")
         parser = argparse.ArgumentParser(description="Align two sequences with Needleman-Wunsch or Smith-Waterman and build the backtrace matrix")
         parser.add_argument("-s1", "--sequence1", help="Set the path to first sequence file (with or without header)", default="seq1.fasta")
         parser.add_argument("-s2", "--sequence2", help="Set the path to second sequence file (with or without header)", default="seq2.fasta")
