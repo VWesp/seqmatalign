@@ -17,7 +17,6 @@ if __name__ == "__main__":
         parser.add_argument("-s", "--scores", help="Set the path to the score file", default="scores.txt")
         parser.add_argument("-g", "--gap", help="Specify the gap costs", default=-1, type=float)
         parser.add_argument("-ie", "--ignore-ends", help="Ignore overhanging ends in the alignment", action="store_true")
-        parser.add_argument("-si", "--set-int", help="Convert all scores in the matrix to int cutting off decimals", action="store_true")
         args = parser.parse_args()
 
         def highlight_cell(x,y, ax=None, **kwargs):
@@ -70,7 +69,7 @@ if __name__ == "__main__":
         maximum_indices = []
         figsize = max(len(seq1), len(seq2))/2
         fig, ax = plt.subplots(figsize=(figsize, figsize))
-        if(args.set_int):
+        if(matrix[0][0].is_integer()):
             ax.text(0, 0, str(int(matrix[0][0])), va='center', ha='center')
         else:
             ax.text(0, 0, str(matrix[0][0]), va='center', ha='center')
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                 arrow = plt.annotate(text="", xy=(j-0.2, 0), xytext=(j-0.8, 0), arrowprops=dict(arrowstyle="<-", color="r"))
                 arrow_matrix[0][j]["L"] = arrow
 
-            if(args.set_int):
+            if(matrix[0][j].is_integer()):
                 ax.text(j, 0, str(int(matrix[0][j])), va='center', ha='center')
             else:
                 ax.text(j, 0, str(matrix[0][j]), va='center', ha='center')
@@ -104,7 +103,7 @@ if __name__ == "__main__":
                 arrow = plt.annotate(text="", xy=(0, i-0.15), xytext=(0, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
                 arrow_matrix[i][0]["U"] = arrow
 
-            if(args.set_int):
+            if(matrix[i][0].is_integer()):
                 ax.text(0, i, str(int(matrix[i][0])), va='center', ha='center')
             else:
                 ax.text(0, i, str(matrix[i][0]), va='center', ha='center')
@@ -153,7 +152,7 @@ if __name__ == "__main__":
                         maximum_value = matrix[i][j]
                         maximum_indices.append([i, j])
 
-                if(args.set_int):
+                if(matrix[i][j].is_integer()):
                     ax.text(j, i, str(int(matrix[i][j])), va='center', ha='center')
                 else:
                     ax.text(j, i, str(matrix[i][j]), va='center', ha='center')
