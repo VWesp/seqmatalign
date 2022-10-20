@@ -22,6 +22,7 @@ if __name__ == "__main__":
             self.master.title("SeqMatAlign")
             self.pack(fill="both", expand=1)
 
+            ####################################################################
             self.files_frame = tk.LabelFrame(self, text="Files", borderwidth=2, relief="groove")
             self.seq1 = None
             self.seq1_button = tk.Button(self.files_frame, text="Load first sequence",
@@ -53,6 +54,45 @@ if __name__ == "__main__":
             self.score_file.grid(column=2, row=1, padx=5)
             self.files_frame.grid(column=0, row=0)
 
+            ####################################################################
+            self.options_frame = tk.LabelFrame(self, text="Options", borderwidth=2, relief="groove")
+
+            self.match_label = ttk.Label(self.options_frame, text="Match score:")
+            self.match_label.grid(column=0, row=0)
+            self.match_entry = tk.Entry(self.options_frame, width=4)
+            self.match_entry.insert(0, 2)
+            self.match_entry.grid(column=1, row=0, padx=5)
+
+            self.mismatch_label = ttk.Label(self.options_frame, text="Mismatch score:")
+            self.mismatch_label.grid(column=2, row=0)
+            self.mismatch_entry = tk.Entry(self.options_frame, width=4)
+            self.mismatch_entry.insert(0, 0)
+            self.mismatch_entry.grid(column=3, row=0, padx=4)
+
+            self.gap_label = ttk.Label(self.options_frame, text="Gap score:")
+            self.gap_label.grid(column=4, row=0)
+            self.gap_entry = tk.Entry(self.options_frame, width=4)
+            self.gap_entry.insert(0, -1)
+            self.gap_entry.grid(column=5, row=0)
+
+            self.algo_label = ttk.Label(self.options_frame, text="Algorithm:")
+            self.algo_label.grid(column=0, row=1, pady=5)
+            self.algo_type = tk.StringVar()
+            self.algo_option = ttk.OptionMenu(self.options_frame, self.algo_type, "NW", *["NW", "SW"])
+            self.algo_option.grid(column=1, row=1, padx=4, pady=5)
+
+            self.function_label = ttk.Label(self.options_frame, text="Algorithm:")
+            self.function_label.grid(column=2, row=1, pady=5)
+            self.function_type = tk.StringVar()
+            self.function_option = ttk.OptionMenu(self.options_frame, self.function_type, "Similarity", *["Similarity", "Distance"])
+            self.function_option.grid(column=3, row=1, pady=5)
+            self.options_frame.grid(column=0, row=1, pady=10)
+
+            ####################################################################
+            self.start_frame = tk.LabelFrame(self, text="SeqMatAlign", borderwidth=2, relief="groove")
+            self.start_button = tk.Button(self.start_frame, text="Start")
+            self.start_button.grid(column=0, row=0)
+            self.start_frame.grid(column=0, row=2, pady=10)
 
         def loadFile(self, type, id):
             filetypes = None
@@ -101,7 +141,6 @@ if __name__ == "__main__":
 
 
             except Exception:
-                print(traceback.format_exc())
                 messagebox.showerror("File error", "An error occurred while opening a file. The file is most likely just in a wrong/unknown format."
                                      " Check the file and try again or open a new file.")
 
