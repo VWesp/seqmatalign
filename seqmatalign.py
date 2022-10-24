@@ -1,4 +1,3 @@
-import argparse
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import matplotlib.ticker as ticker
@@ -6,6 +5,7 @@ import matplotlib.backends.backend_pdf
 import sys
 import os
 import traceback
+import re
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
@@ -24,14 +24,13 @@ if __name__ == "__main__":
 
             ####################################################################
             self.files_frame = tk.LabelFrame(self, text="Files", borderwidth=2, relief="groove")
+
             self.seq1 = None
             self.seq1_button = tk.Button(self.files_frame, text="Load first sequence",
                                          command=lambda: self.loadFile("sequence", 1))
             self.seq1_button.grid(column=0, row=0, padx=5)
-
             self.seq1_file = ttk.Label(self.files_frame)
             self.seq1_file.grid(column=0, row=1, padx=5, pady=5)
-
             self.seq1_name = ttk.Label(self.files_frame)
             self.seq1_name.grid(column=0, row=2, padx=5, pady=5)
 
@@ -39,19 +38,21 @@ if __name__ == "__main__":
             self.seq2_button = tk.Button(self.files_frame, text="Load second sequence",
                                          command=lambda: self.loadFile("sequence", 2))
             self.seq2_button.grid(column=1, row=0, padx=5)
-
             self.seq2_file = ttk.Label(self.files_frame)
             self.seq2_file.grid(column=1, row=1, padx=5, pady=5)
-
             self.seq2_name = ttk.Label(self.files_frame)
             self.seq2_name.grid(column=1, row=2, padx=5, pady=5)
 
             self.scores = None
-            self.score_button = tk.Button(self.files_frame, text="Load score",
+            self.score_button = tk.Button(self.files_frame, text="Load score matrix",
                                           command=lambda: self.loadFile("score", 3))
             self.score_button.grid(column=2, row=0)
             self.score_file = ttk.Label(self.files_frame)
-            self.score_file.grid(column=2, row=1, padx=5)
+            self.score_file.grid(column=2, row=1)
+            self.remove_score_button = tk.Button(self.files_frame, text="Remove score matrix",
+                                                 command=lambda: self.removeScore())
+            self.remove_score_button.grid(column=2, row=2)
+
             self.files_frame.grid(column=0, row=0)
 
             ####################################################################
@@ -81,18 +82,27 @@ if __name__ == "__main__":
             self.algo_option = ttk.OptionMenu(self.options_frame, self.algo_type, "NW", *["NW", "SW"])
             self.algo_option.grid(column=1, row=1, padx=4, pady=5)
 
-            self.function_label = ttk.Label(self.options_frame, text="Algorithm:")
+            self.function_label = ttk.Label(self.options_frame, text="Function:")
             self.function_label.grid(column=2, row=1, pady=5)
             self.function_type = tk.StringVar()
             self.function_option = ttk.OptionMenu(self.options_frame, self.function_type, "Similarity", *["Similarity", "Distance"])
-            self.function_option.grid(column=3, row=1, pady=5)
+            self.function_option.grid(column=3, row=1, padx=4, pady=5)
+
+            self.ignore_ends_var = tk.IntVar()
+            self.ignore_ends = tk.Checkbutton(self.options_frame, text="Ignore ends", variable=self.ignore_ends_var)
+            self.ignore_ends.grid(column=4, row=1, pady=5)
+
             self.options_frame.grid(column=0, row=1, pady=10)
 
             ####################################################################
             self.start_frame = tk.LabelFrame(self, text="SeqMatAlign", borderwidth=2, relief="groove")
-            self.start_button = tk.Button(self.start_frame, text="Start")
-            self.start_button.grid(column=0, row=0)
+
+            self.start_button = tk.Button(self.start_frame, text="Start aligning",
+                                          command=lambda: self.align())
+            self.start_button.grid(column=0, row=0, padx=10)
+
             self.start_frame.grid(column=0, row=2, pady=10)
+
 
         def loadFile(self, type, id):
             filetypes = None
@@ -101,51 +111,60 @@ if __name__ == "__main__":
             else:
                 filetypes = "*.txt"
 
+            file = filedialog.askopenfilename(title="Select "+type+" file",
+                                              filetypes=((type+" file", filetypes), ("all files","*.*")))
+            if(len(file)):
+                with open(file, "r") as file_reader:
+                    content = file_reader.readlines()
+                    seq_name = ""
+                    if(id==1 or id==2):
+                        if(content[0].startswith(">")):
+                            seq_name = content[0].strip()
+                            content = "".join(content[1:]).strip().replace("\n", "")
+                        else:
+                            seq_name = "no header found"
+                            content = "".join(content).strip().replace("\n", "")
+
+                        if(id==1):
+                            self.seq1 = content.upper()
+                            self.seq1_file.config(text=os.path.basename(file))
+                            self.seq1_name.config(text=seq_name)
+                        elif(id==2):
+                            self.seq2 = content.upper()
+                            self.seq2_file.config(text=os.path.basename(file))
+                            self.seq2_name.config(text=seq_name)
+
+                    elif(id==3):
+                        self.scores = {}
+                        letters = content[0].strip().split(" ")
+                        first_index = 0
+                        for line in content[1:]:
+                            score = line.strip().split(" ")
+                            self.scores[letters[first_index]] = {}
+                            for second_index in range(len(score)):
+                                self.scores[letters[first_index]][letters[second_index]] = float(score[second_index])
+
+                            first_index += 1
+
+                        self.score_file.config(text=os.path.basename(file))
+
+
+        def removeScore(self):
+            self.score_file["text"] = ""
+
+
+        def validateEntry(self, entry):
             try:
-                file = filedialog.askopenfilename(title="Select "+type+" file",
-                                                  filetypes=((type+" file", filetypes), ("all files","*.*")))
-                if(len(file)):
-                    with open(file, "r") as file_reader:
-                        content = file_reader.readlines()
-                        seq_name = ""
-                        if(id==1 or id==2):
-                            if(content[0].startswith(">")):
-                                seq_name = content[0].strip()
-                                content = "".join(content[1:]).strip().replace("\n", "")
-                            else:
-                                content = "".join(content).strip().replace("\n", "")
+                float(entry)
+            except ValueError:
+                print(traceback.format_exc())
+                return False
 
-                            if(id==1):
-                                self.seq1 = content
-                                self.seq1_file.config(text=os.path.basename(file))
-                                self.seq1_name.config(text=seq_name)
-                            elif(id==2):
-                                self.seq2 = content
-                                self.seq2_file.config(text=os.path.basename(file))
-                                self.seq2_name.config(text=seq_name)
+            return True
 
-                        elif(id==3):
-                            self.scores = {}
-                            letters = content[0].strip().split(" ")
-                            first_index = 0
-                            for line in content[1:]:
-                                score = line.strip().split(" ")
-                                self.scores[letters[first_index]] = {}
-                                for second_index in range(len(score)):
-                                    self.scores[letters[first_index]][letters[second_index]] = float(score[second_index])
-
-                                first_index += 1
-
-                            self.score_file.config(text=os.path.basename(file))
-
-
-
-            except Exception:
-                messagebox.showerror("File error", "An error occurred while opening a file. The file is most likely just in a wrong/unknown format."
-                                     " Check the file and try again or open a new file.")
 
         def backtrace(self, i, j, aligned_seq1, aligned_seq2):
-            if((i == 0 and j == 0) or (self.args.algorithm == "sw" and self.matrix[i][j] == 0)):
+            if((i == 0 and j == 0) or (self.algo_type.get() == "SW" and self.matrix[i][j] == 0)):
                 self.alignments.append([aligned_seq1, aligned_seq2])
                 return
 
@@ -184,50 +203,40 @@ if __name__ == "__main__":
             return rect
 
 
-        def main(self):
-            parser = argparse.ArgumentParser(description="Align two sequences with Needleman-Wunsch or Smith-Waterman and build the backtrace self.matrix")
-            parser.add_argument("-s1", "--sequence1", help="Set the path to first sequence file (with or without header)", default="seq1.fasta")
-            parser.add_argument("-s2", "--sequence2", help="Set the path to second sequence file (with or without header)", default="seq2.fasta")
-            parser.add_argument("-alg", "--algorithm", help="Specify whether the Needleman-Wunsch (nw) or the Smith-Waterman (sw) algorithm should be used", choices=["nw", "sw"], default="nw")
-            parser.add_argument("-f", "--function", help="Specify whether the score function should be minimized (distance, dis) or maximized (similarity, sim). If the Smith-Waterman algorithm is chosen, the function is always maximized", choices=["dis", "sim"], default="sim")
-            parser.add_argument("-s", "--scores", help="Set the path to the score file", default="scores.txt")
-            parser.add_argument("-g", "--gap", help="Specify the gap costs", default=-1, type=float)
-            parser.add_argument("-ie", "--ignore-ends", help="Ignore overhanging ends in the alignment", action="store_true")
-            self.args = parser.parse_args()
+        def align(self):
+            if(not len(self.seq1_file["text"])):
+                messagebox.showerror("No first sequence file", "No file was given for the first sequence.")
+                return
 
-            self.seq1 = None
-            with open(self.args.sequence1, "r") as seq_reader:
-                content = seq_reader.readlines()
-                if(content[0].startswith(">")):
-                    self.seq1 = "".join(content[1:]).strip().replace("\n", "")
-                else:
-                    self.seq1 = "".join(content).strip().replace("\n", "")
+            if(not len(self.seq2_file["text"])):
+                messagebox.showerror("No second sequence file", "No file was given for the second sequence.")
+                return
 
-            self.seq2 = None
-            with open(self.args.sequence2, "r") as seq_reader:
-                content = seq_reader.readlines()
-                if(content[0].startswith(">")):
-                    self.seq2 = "".join(content[1:]).strip().replace("\n", "")
-                else:
-                    self.seq2 = "".join(content).strip().replace("\n", "")
+            if(not len(self.score_file["text"])):
+                if(not self.validateEntry(self.match_entry.get())):
+                    messagebox.showerror("Invalid match cost", "Either the given match cost was not a number or the field was left empty.")
+                    return
 
-            self.scores = {}
-            with open(self.args.scores, "r") as score_reader:
-                content = score_reader.readlines()
-                letters = content[0].strip().split(" ")
-                first_index = 0
-                for line in content[1:]:
-                    score = line.strip().split(" ")
-                    scores[letters[first_index]] = {}
-                    for second_index in range(len(score)):
-                        scores[letters[first_index]][letters[second_index]] = float(score[second_index])
+                if(not self.validateEntry(self.mismatch_entry.get())):
+                    messagebox.showerror("Invalid mismatch cost", "Either the given mismatch cost was not a number or the field was left empty.")
+                    return
 
-                    first_index += 1
+                if(not self.validateEntry(self.gap_entry.get())):
+                    messagebox.showerror("Invalid gap cost", "Either the given gap cost was not a number or the field was left empty.")
+                    return
 
-            alg_type = "global"
-            if(self.args.algorithm == "sw"):
-                self.args.function = "sim"
-                alg_type = "local"
+                self.scores = {}
+                letters = set(self.seq1+self.seq2)
+                for letter1 in letters:
+                    self.scores[letter1] = {}
+                    for letter2 in letters:
+                        if(letter1==letter2):
+                            self.scores[letter1][letter2] = float(self.match_entry.get())
+                        else:
+                            self.scores[letter1][letter2] = float(self.mismatch_entry.get())
+
+            if(self.algo_type.get()=="SW"):
+                self.function_type.set("Similarity")
 
             self.seq1 = "-" + self.seq1
             self.seq2 = "-" + self.seq2
@@ -244,11 +253,11 @@ if __name__ == "__main__":
                 ax.text(0, 0, str(self.matrix[0][0]), va='center', ha='center')
 
             for j in range(1, len(self.seq2)):
-                if(self.args.algorithm == "nw"):
-                    if(self.args.ignore_ends):
+                if(self.algo_type.get() == "NW"):
+                    if(self.ignore_ends_var.get()):
                         self.matrix[0][j] = 0.0
                     else:
-                        self.matrix[0][j] = float(self.args.gap) * j
+                        self.matrix[0][j] = float(self.gap_entry.get()) * j
 
                     self.backtrace_matrix[0][j] = "L"
                     arrow = plt.annotate(text="", xy=(j-0.2, 0), xytext=(j-0.8, 0), arrowprops=dict(arrowstyle="<-", color="r"))
@@ -262,11 +271,11 @@ if __name__ == "__main__":
                 self.highlight_cell(j, 0, color="black", linewidth=1)
 
             for i in range(1, len(self.seq1)):
-                if(self.args.algorithm == "nw"):
-                    if(self.args.ignore_ends):
+                if(self.algo_type.get() == "NW"):
+                    if(self.ignore_ends_var.get()):
                         self.matrix[i][0] = 0.0
                     else:
-                        self.matrix[i][0] = float(self.args.gap) * i
+                        self.matrix[i][0] = float(self.gap_entry.get()) * i
 
                     self.backtrace_matrix[i][0] = "U"
                     arrow = plt.annotate(text="", xy=(0, i-0.15), xytext=(0, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
@@ -281,24 +290,23 @@ if __name__ == "__main__":
 
             for i in range(1, len(self.seq1)):
                 for j in range(1, len(self.seq2)):
-
-                    diagonal_value = self.matrix[i-1][j-1] + scores[self.seq1[i]][self.seq2[j]]
-                    left_value = self.matrix[i][j-1] + self.args.gap
-                    if(self.args.ignore_ends and i==len(self.seq1)-1):
+                    diagonal_value = self.matrix[i-1][j-1] + self.scores[self.seq1[i]][self.seq2[j]]
+                    left_value = self.matrix[i][j-1] + float(self.gap_entry.get())
+                    if(self.ignore_ends_var.get() and i==len(self.seq1)-1):
                         left_value = self.matrix[i][j-1]
 
-                    up_value = self.matrix[i-1][j] + self.args.gap
-                    if(self.args.ignore_ends and j==len(self.seq2)-1):
+                    up_value = self.matrix[i-1][j] + float(self.gap_entry.get())
+                    if(self.ignore_ends_var.get() and j==len(self.seq2)-1):
                         up_value = self.matrix[i-1][j]
 
-                    if(self.args.function == "sim"):
+                    if(self.function_type.get() == "Similarity"):
                         self.matrix[i][j] = max(diagonal_value, max(left_value, up_value))
-                        if(self.args.algorithm == "sw"):
+                        if(self.algo_type.get() == "SW"):
                             self.matrix[i][j] = max(0.0, self.matrix[i][j])
-                    elif(self.args.function == "dis"):
+                    elif(self.function_type.get() == "Distance"):
                         self.matrix[i][j] = min(diagonal_value, min(left_value, up_value))
 
-                    if(self.args.algorithm == "nw" or (self.args.algorithm == "sw" and self.matrix[i][j] > 0)):
+                    if(self.algo_type.get() == "NW" or (self.algo_type.get() == "SW" and self.matrix[i][j] > 0)):
                         if(self.matrix[i][j] == diagonal_value):
                             self.backtrace_matrix[i][j] += "D"
                             arrow = plt.annotate(text="", xy=(j-0.2, i-0.15), xytext=(j-0.8, i-0.85), arrowprops=dict(arrowstyle="<-", color="r"))
@@ -334,10 +342,10 @@ if __name__ == "__main__":
             ax.set_xticklabels([""]+list(self.seq2))
             ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
             self.alignments = []
-            if(self.args.algorithm == "nw"):
+            if(self.algo_type.get() == "NW"):
                 self.highlight_cell(len(self.seq2)-1, len(self.seq1)-1, color="green", linewidth=2)
                 self.backtrace(len(self.seq1)-1, len(self.seq2)-1, [], [])
-            elif((self.args.algorithm == "sw" and maximum_value != 0)):
+            elif((self.algo_type.get() == "SW" and maximum_value != 0)):
                 for indices in maximum_indices:
                     self.highlight_cell(indices[1], indices[0], color="green", linewidth=2)
                     self.backtrace(indices[0], indices[1], [], [])
@@ -351,7 +359,7 @@ if __name__ == "__main__":
                     aligments_str += "\n\n" + str(alignment[0]) + "\n" + str(alignment[1])
 
             plt.gcf().text(0.93, 0.5, aligments_str, verticalalignment="center", bbox=dict(boxstyle='round', facecolor='white', alpha=0.15))
-            plt.savefig(alg_type+"_alignments.pdf", bbox_inches="tight")
+            plt.savefig(self.algo_type.get()+"_alignments.pdf", bbox_inches="tight")
 
     try:
         root = tk.Tk()
