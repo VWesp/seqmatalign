@@ -389,7 +389,8 @@ if __name__ == "__main__":
                         aligments_str += "\n\n" + str(alignment[0]) + "\n" + str(alignment[1])
 
                 plt.gcf().text(0.93, 0.5, aligments_str, verticalalignment="center", bbox=dict(boxstyle='round', facecolor='white', alpha=0.15))
-                plt.savefig("../../"+self.algo_type.get()+"_alignments.pdf", bbox_inches="tight")
+                output_path = os.path.join("..", os.path.join("..", self.algo_type.get()+"_alignments.pdf"))
+                plt.savefig(output_path, bbox_inches="tight")
             except Exception:
                 messagebox.showerror("Unexpected error", "Something unexpected happened. Please ask the admin.")
 
