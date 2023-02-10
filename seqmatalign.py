@@ -392,7 +392,7 @@ if __name__ == "__main__":
                 output_path = os.path.join("..", os.path.join("..", self.algo_type.get()+"_alignments.pdf"))
                 plt.savefig(output_path, bbox_inches="tight")
             except Exception:
-                messagebox.showerror("Unexpected error", "Something unexpected happened. Please ask the admin.")
+                messagebox.showerror("Unexpected error", traceback.format_exc())
 
 
 
@@ -408,4 +408,4 @@ if __name__ == "__main__":
         root.protocol("WM_DELETE_WINDOW", on_closing)
         root.mainloop()
     except Exception:
-        messagebox.showerror("Unexpected error", "Something unexpected happened. Please ask the admin.")
+        messagebox.showerror("Unexpected error", traceback.format_exc())
